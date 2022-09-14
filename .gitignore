@@ -2,3 +2,5 @@
 .vscode/
 FC-MNIST/build/
 FC-MNIST/python-src/__pycache__/
+resnet-hymenoptera/build/
+resnet-hymenoptera/python-src/__pycache__/
