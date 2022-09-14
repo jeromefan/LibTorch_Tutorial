@@ -1,2 +1,4 @@
 
+.vscode/
 FC-MNIST/build/
+FC-MNIST/python-src/__pycache__/

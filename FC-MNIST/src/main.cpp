@@ -57,7 +57,9 @@ int main()
 
         for (auto &batch : *train_loader)
         {
-            auto data = batch.data.view({batch_size, -1}).to(device);
+            auto data = batch.data;
+            auto batch_num = data.size(0);
+            data = data.view({batch_num, -1}).to(device);
             auto target = batch.target.to(device);
 
             // Forward Pass
@@ -65,7 +67,7 @@ int main()
             auto loss = torch::nn::functional::cross_entropy(output, target);
 
             // Update running loss
-            running_loss += loss.item<double>() * data.size(0);
+            running_loss += loss.item<double>() * batch_num;
 
             // Backward and Optimize
             optimizer.zero_grad();
@@ -73,8 +75,8 @@ int main()
             optimizer.step();
         }
         auto sample_mean_loss = running_loss / num_train_samples;
-        std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs << "]" << std::endl
-                  << "Training Loss: " << sample_mean_loss << std::endl;
+        std::cout << "Epoch [" << (epoch + 1) << "/" << num_epochs
+                  << "]  Training Loss: " << sample_mean_loss << std::endl;
     }
 
     std::cout << "Start Testing..." << std::endl;
@@ -83,7 +85,9 @@ int main()
     size_t num_correct = 0;
     for (const auto &batch : *test_loader)
     {
-        auto data = batch.data.view({batch_size, -1}).to(device);
+        auto data = batch.data;
+        auto batch_num = data.size(0);
+        data = data.view({batch_num, -1}).to(device);
         auto target = batch.target.to(device);
         auto output = model->forward(data);
         auto prediction = output.argmax(1);
