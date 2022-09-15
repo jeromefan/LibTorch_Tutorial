@@ -8,4 +8,4 @@ aux_source_directory(./src SRCS)
 add_executable(${PROJECT_NAME} ${SRCS})
 
 target_link_libraries(${PROJECT_NAME} "${TORCH_LIBRARIES}")
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

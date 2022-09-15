@@ -1,18 +1,92 @@
 #ifndef RESNET_H
 #define RESNET_H
 
-#include <torch/torch.h>
-
-class ResnetImpl : public torch::nn::Module
+#include "residual_block.h"
+namespace resnet
 {
-public:
-    ResnetImpl(int64_t input_size, int64_t hidden_size, int64_t num_classes);
-    torch::Tensor forward(torch::Tensor x);
+    template <typename Block>
+    class ResNetImpl : public torch::nn::Module
+    {
+    public:
+        explicit ResNetImpl(const std::array<int64_t, 3> &layers, int64_t num_classes = 10);
+        torch::Tensor forward(torch::Tensor x);
 
-private:
-    torch::nn::Linear fc1;
-    torch::nn::Linear fc2;
-};
-TORCH_MODULE(Resnet);
+    private:
+        int64_t in_channels = 16;
+        torch::nn::Conv2d conv{conv3x3(3, 16)};
+        torch::nn::BatchNorm2d bn{16};
+        torch::nn::ReLU relu;
+        torch::nn::Sequential layer1;
+        torch::nn::Sequential layer2;
+        torch::nn::Sequential layer3;
+        torch::nn::AvgPool2d avg_pool{8};
+        torch::nn::Linear fc;
 
+        torch::nn::Sequential make_layer(int64_t out_channels, int64_t blocks, int64_t stride = 1);
+    };
+
+    template <typename Block>
+    ResNetImpl<Block>::ResNetImpl(const std::array<int64_t, 3> &layers,
+                                  int64_t num_classes)
+        : layer1(make_layer(16, layers[0])),
+          layer2(make_layer(32, layers[1], 2)),
+          layer3(make_layer(64, layers[2], 2)),
+          fc(64, num_classes)
+    {
+        register_module("conv", conv);
+        register_module("bn", bn);
+        register_module("relu", relu);
+        register_module("layer1", layer1);
+        register_module("layer2", layer2);
+        register_module("layer3", layer3);
+        register_module("avg_pool", avg_pool);
+        register_module("fc", fc);
+    }
+
+    template <typename Block>
+    torch::Tensor ResNetImpl<Block>::forward(torch::Tensor x)
+    {
+        x = conv->forward(x);
+        x = bn->forward(x);
+        x = relu->forward(x);
+        x = layer1->forward(x);
+        x = layer2->forward(x);
+        x = layer3->forward(x);
+        x = avg_pool->forward(x);
+        x = x.view({x.size(0), -1});
+        return fc->forward(x);
+    }
+
+    template <typename Block>
+    torch::nn::Sequential ResNetImpl<Block>::make_layer(int64_t out_channels, int64_t blocks, int64_t stride)
+    {
+        torch::nn::Sequential layers;
+        torch::nn::Sequential downsample{nullptr};
+
+        if (stride != 1 || in_channels != out_channels)
+        {
+            downsample = torch::nn::Sequential{
+                conv3x3(in_channels, out_channels, stride),
+                torch::nn::BatchNorm2d(out_channels)};
+        }
+
+        layers->push_back(Block(in_channels, out_channels, stride, downsample));
+
+        in_channels = out_channels;
+
+        for (int64_t i = 1; i != blocks; ++i)
+        {
+            layers->push_back(Block(out_channels, out_channels));
+        }
+
+        return layers;
+    }
+
+    template <typename Block = ResidualBlock>
+    class ResNet : public torch::nn::ModuleHolder<ResNetImpl<Block>>
+    {
+    public:
+        using torch::nn::ModuleHolder<ResNetImpl<Block>>::ModuleHolder;
+    };
+}
 #endif
