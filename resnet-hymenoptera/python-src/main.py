@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as tud
 from torchvision import datasets, transforms
-from FCnet import FCnet
 
 if __name__ == "__main__":
+    quit()
     print('2 FC Layers Neural Network')
 
     # Device

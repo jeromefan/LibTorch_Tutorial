@@ -24,7 +24,22 @@ namespace resnet
 
     torch::Tensor ResidualBlockImpl::forward(torch::Tensor x)
     {
-        return x;
+        auto out = conv1->forward(x);
+        out = bn1->forward(out);
+        out = relu->forward(out);
+        out = conv2->forward(out);
+        out = bn2->forward(out);
+        auto residual = downsampler ? downsampler->forward(x) : x;
+        out += residual;
+        out = relu->forward(out);
+        return out;
+    }
+
+    torch::nn::Conv2d conv1x1(int64_t in_channels, int64_t out_channels, int64_t stride)
+    {
+        return torch::nn::Conv2d(torch::nn::Conv2dOptions(in_channels, out_channels, 1)
+                                     .stride(stride)
+                                     .bias(false));
     }
 
     torch::nn::Conv2d conv3x3(int64_t in_channels, int64_t out_channels, int64_t stride)
@@ -32,6 +47,14 @@ namespace resnet
         return torch::nn::Conv2d(torch::nn::Conv2dOptions(in_channels, out_channels, 3)
                                      .stride(stride)
                                      .padding(1)
+                                     .bias(false));
+    }
+
+    torch::nn::Conv2d conv7x7(int64_t in_channels, int64_t out_channels, int64_t stride)
+    {
+        return torch::nn::Conv2d(torch::nn::Conv2dOptions(in_channels, out_channels, 7)
+                                     .stride(stride)
+                                     .padding(3)
                                      .bias(false));
     }
 
