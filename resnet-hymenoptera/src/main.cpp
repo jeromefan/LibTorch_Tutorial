@@ -4,7 +4,7 @@
 
 int main()
 {
-    std::cout << "Deep Residual Network for Imagefolder Dataset" << std::endl;
+    std::cout << "Deep Residual Network for Imagefolder Dataset!" << std::endl;
 
     // Device
     auto cuda_available = torch::cuda::is_available();
@@ -42,6 +42,8 @@ int main()
     std::array<int64_t, 4> layers{2, 2, 2, 2};
     resnet::ResNet<resnet::ResidualBlock> model(layers, num_classes);
     model->to(device);
+
+    std::cout << "Model Created!" << std::endl;
 
     // Optimizer
     torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(learning_rate).weight_decay(weight_decay));

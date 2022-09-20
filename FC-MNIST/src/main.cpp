@@ -3,7 +3,7 @@
 
 int main()
 {
-    std::cout << "2 FC Layers Neural Network" << std::endl;
+    std::cout << "2 FC Layers Neural Network!" << std::endl;
 
     // Device
     auto cuda_available = torch::cuda::is_available();
@@ -23,25 +23,27 @@ int main()
     auto train_dataset = torch::data::datasets::MNIST(MNIST_data_path)
                              .map(torch::data::transforms::Normalize<>(0.1307, 0.3081))
                              .map(torch::data::transforms::Stack<>());
-    auto test_dataset = torch::data::datasets::MNIST(MNIST_data_path, torch::data::datasets::MNIST::Mode::kTest)
-                            .map(torch::data::transforms::Normalize<>(0.1307, 0.3081))
-                            .map(torch::data::transforms::Stack<>());
+    auto val_dataset = torch::data::datasets::MNIST(MNIST_data_path, torch::data::datasets::MNIST::Mode::kTest)
+                           .map(torch::data::transforms::Normalize<>(0.1307, 0.3081))
+                           .map(torch::data::transforms::Stack<>());
 
     // Number of samples in the dataset
     auto num_train_samples = train_dataset.size().value();
-    auto num_test_samples = test_dataset.size().value();
+    auto num_val_samples = val_dataset.size().value();
 
     // Data Loaders
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(
         std::move(train_dataset), batch_size);
-    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
-        std::move(test_dataset), batch_size);
+    auto val_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(
+        std::move(val_dataset), batch_size);
 
     std::cout << "Data Loaded!" << std::endl;
 
-    // Neural Network Model
+    // Model
     FCnet model(input_size, hidden_size, num_classes);
     model->to(device);
+
+    std::cout << "Model Created!" << std::endl;
 
     // Optimizer
     torch::optim::SGD optimizer(model->parameters(), torch::optim::SGDOptions(learning_rate));
@@ -52,24 +54,16 @@ int main()
     std::cout << "Start Training..." << std::endl;
     for (size_t epoch = 0; epoch != num_epochs; ++epoch)
     {
-        // Initialize
         double running_loss = 0.0;
-
         for (auto &batch : *train_loader)
         {
             auto data = batch.data;
             auto batch_num = data.size(0);
             data = data.view({batch_num, -1}).to(device);
             auto target = batch.target.to(device);
-
-            // Forward Pass
             auto output = model->forward(data);
             auto loss = torch::nn::functional::cross_entropy(output, target);
-
-            // Update running loss
             running_loss += loss.item<double>() * batch_num;
-
-            // Backward and Optimize
             optimizer.zero_grad();
             loss.backward();
             optimizer.step();
@@ -79,11 +73,11 @@ int main()
                   << "]  Training Loss: " << sample_mean_loss << std::endl;
     }
 
-    std::cout << "Start Testing..." << std::endl;
+    std::cout << "Start Validation..." << std::endl;
     model->eval();
     torch::NoGradGuard no_grad;
     size_t num_correct = 0;
-    for (const auto &batch : *test_loader)
+    for (const auto &batch : *val_loader)
     {
         auto data = batch.data;
         auto batch_num = data.size(0);
@@ -93,8 +87,8 @@ int main()
         auto prediction = output.argmax(1);
         num_correct += prediction.eq(target).sum().item<int64_t>();
     }
-    auto test_accuracy = static_cast<double>(num_correct) / num_test_samples;
-    std::cout << "Testing Accuracy: " << test_accuracy << std::endl;
+    auto val_accuracy = static_cast<double>(num_correct) / num_val_samples;
+    std::cout << "Validation Accuracy: " << val_accuracy << std::endl;
 
     return 0;
 }

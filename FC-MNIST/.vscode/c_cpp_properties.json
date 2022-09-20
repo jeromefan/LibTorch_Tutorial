@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "/usr/local/libtorch/**"
             ],
-            "cppStandard": "gnu++17"
+            "cppStandard": "gnu++14"
         }
     ],
     "version": 4

@@ -3,10 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as tud
 from torchvision import datasets, transforms
+from loadData import ImageFolderDataset
 
 if __name__ == "__main__":
-    quit()
-    print('2 FC Layers Neural Network')
+    print('Deep Residual Network for Imagefolder Dataset!')
 
     # Device
     cuda_available = torch.cuda.is_available()
@@ -15,13 +15,11 @@ if __name__ == "__main__":
         'Training on CPU.')
 
     # Hyper Parameters
-    input_size = 784
-    hidden_size = 500
-    num_classes = 10
-    batch_size = 100
-    num_epochs = 5
-    learning_rate = 0.001
-    MNIST_data_path = '/home/jerome/data/'
+    num_classes = 2
+    batch_size = 64
+    num_epochs = 20
+    learning_rate = 1e-3
+    MNIST_data_path = '/home/jerome/data/hymenoptera_data'
 
     # MNIST Dataset
     train_dataset = datasets.MNIST(MNIST_data_path,
@@ -31,29 +29,30 @@ if __name__ == "__main__":
                                                                 transforms.Normalize(
                                        mean=(0.1307,), std=(0.3081,))])
                                    )
-
-    test_dataset = datasets.MNIST(MNIST_data_path,
-                                  train=False,
-                                  download=False,
-                                  transform=transforms.Compose([transforms.ToTensor(),
+    val_dataset = datasets.MNIST(MNIST_data_path,
+                                 train=False,
+                                 download=False,
+                                 transform=transforms.Compose([transforms.ToTensor(),
                                                                transforms.Normalize(
-                                      mean=(0.1307,), std=(0.3081,))])
-                                  )
+                                     mean=(0.1307,), std=(0.3081,))])
+                                 )
 
     # Number of samples in the dataset
     num_train_samples = len(train_dataset)
-    num_test_samples = len(test_dataset)
+    num_val_samples = len(val_dataset)
 
     # Data Loaders
     train_loader = tud.DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = tud.DataLoader(test_dataset, batch_size=batch_size)
+    val_loader = tud.DataLoader(val_dataset, batch_size=batch_size)
 
     print('Data Loaded!')
 
-    # Neural Network Model
+    # Model
     model = FCnet(input_size, hidden_size, num_classes)
     model.to(device)
+
+    print('Model Created!')
 
     # Optimizer
     optimizer = optim.SGD(model.parameters(), learning_rate)
@@ -82,14 +81,15 @@ if __name__ == "__main__":
         sample_mean_loss = running_loss / num_train_samples
         print(
             f'Epoch [{epoch + 1}/{num_epochs}]  Training Loss: {sample_mean_loss}')
-    print('Start Testing...')
+
+    print('Start Validation...')
     model.eval()
     num_correct = 0
-    for i, (data, target) in enumerate(test_loader):
+    for i, (data, target) in enumerate(val_loader):
         batch_num = data.size(0)
         data, target = data.view(batch_num, -1).to(device), target.to(device)
         output = model(data)
         prediction = output.argmax(dim=1)
         num_correct += torch.sum(prediction.eq(target))
-    test_accuracy = num_correct / num_test_samples
-    print(f'Testing Accuracy: {test_accuracy}')
+    val_accuracy = num_correct / num_val_samples
+    print(f'Validation Accuracy: {val_accuracy}')

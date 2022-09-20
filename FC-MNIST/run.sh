@@ -6,7 +6,7 @@ cmake ..
 make -j8
 echo -e "\033[36;1m ReBuild Finished! \033[0m"
 
-echo -e "\033[36;1m Runing C++ project! \033[0m"
+echo -e "\033[36;1m Runing C++ Project! \033[0m"
 starttime_cpp=`date +'%Y-%m-%d %H:%M:%S'`
 ./FCnet
 endtime_cpp=`date +'%Y-%m-%d %H:%M:%S'`
@@ -14,7 +14,7 @@ start_seconds_cpp=$(date --date="$starttime_cpp" +%s);
 end_seconds_cpp=$(date --date="$endtime_cpp" +%s); 
 echo -e "\033[36;1m C++ Time Used: $((end_seconds_cpp-start_seconds_cpp)) \033[0m"
 
-echo -e "\033[36;1m Runing Python project! \033[0m"
+echo -e "\033[36;1m Runing Python Project! \033[0m"
 cd ../python-src
 starttime_python=`date +'%Y-%m-%d %H:%M:%S'`
 python main.py
