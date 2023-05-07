@@ -2,8 +2,6 @@
 
 此 tutorial 面向和我一样的之前在 PyTorch 上做 CV，现在需要在 LibTorch 上 进行 NLP 以及知识图谱相关工作的人。因此，每一个小项目将分别提供两份代码，首先以 PyTorch 代码来理解 NLP 相关算法，随后对应到 LibTorch 上进行相关 API 的学习与使用。
 
-相关讲解详述请看[个人博客](https://jeromefan.github.io/)
-
 ## Project 1: FC-MNIST
 
 ```bash
